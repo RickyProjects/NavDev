@@ -1,9 +1,13 @@
-body{
-    background-color: #be6e6e;
+body {
+   background-color: #ffce1b;
+   color: beige;
 }
-.box{
-    display: flex;
-    height: 100px;
-    width: 100px;
-    background: #724d4d;
+
+
+.mainPageDrawings {
+   #title {
+       display: block;
+       margin: auto;
+       width: 50%;
+   }
 }
