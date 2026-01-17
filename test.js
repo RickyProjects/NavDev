@@ -37,7 +37,6 @@ class Airport {
     }
 } // end of Airport class
 
-
 class CommonWaypoint {
     constructor(coords) {
         // (for reference) this is the waypoint format from the github description: 
