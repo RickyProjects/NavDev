@@ -86,7 +86,12 @@ function planeStateAtTime(plane, T) {
   const totalDistM = haversineMeters(plane.from, plane.to);
 
   //converts the planes speed from knots to meters per second
-  const speedMps = plane.speed * 0.514444;
+  const speedMps =
+  (plane.speedMps != null) ? plane.speedMps
+  : (plane.speed != null) ? plane.speed * 0.514444
+  : 0;
+
+if (speedMps <= 0) return { active: false, reason: "invalid speed" };
 
   //finds the duration of flights
   const duration = totalDistM / speedMps;
@@ -180,10 +185,27 @@ const tickMs = 1000;
 
 setInterval(() => {
   const conflicts = checkConflicts(planes, T);
+
+  const nowKeys = new Set();
   for (const c of conflicts) {
-    console.log(
-      `LOSS OF SEPARATION at T=${c.time}s between ${c.planeA} and ${c.planeB}`
-    );
+    const key = [c.planeA, c.planeB].sort().join("|");
+    nowKeys.add(key);
+
+    //only prints the conflict zone one time
+    if (!activeConflictKeys.has(key)) {
+      console.log(`LOSS OF SEPARATION START at T=${c.time}s between ${c.planeA} and ${c.planeB}`);
+    }
   }
+
+  //conflicts that ended
+  for (const key of activeConflictKeys) {
+    if (!nowKeys.has(key)) {
+      console.log(`LOSS OF SEPARATION END at T=${T}s for ${key}`);
+    }
+  }
+
+  activeConflictKeys.clear();
+  for (const key of nowKeys) activeConflictKeys.add(key);
+
   T += tickMs / 1000;
 }, tickMs);
