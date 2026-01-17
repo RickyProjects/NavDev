@@ -1,0 +1,9 @@
+body{
+    background-color: #be6e6e;
+}
+.box{
+    display: flex;
+    height: 100px;
+    width: 100px;
+    background: #724d4d;
+}
