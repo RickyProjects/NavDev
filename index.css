@@ -1,13 +1,48 @@
 body {
-   background-color: #ffce1b;
-   color: beige;
+  background-color: #add8e6;
+  color: beige;
 }
 
 
 .mainPageDrawings {
-   #title {
-       display: block;
-       margin: auto;
-       width: 50%;
-   }
+  #title {
+      display: block;
+      margin: auto;
+      width: 50%;
+  }
+}
+
+
+.conflicts {
+   position:absolute;
+   background-color: #36454f;
+   border-radius: 25px 0 0 25px;
+   font-size: 50px;
+  
+   /*scrollability*/
+   margin-top: 2%;
+   margin-left: 5%;
+   height: 800px;
+   width: 1050px;
+   overflow-y: scroll;
+
+
+}
+
+
+.solutions {
+   position:absolute;
+   background-color: white;
+   border-radius: 0 25px 25px 0;
+   font-size: 50px;
+   color: black;
+
+
+   /*scrollability*/
+   margin-top: 2%;
+   margin-left: 59%;
+   height: 800px;
+   width: 660px;
+   overflow-y: scroll;
+
 }
