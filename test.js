@@ -1,225 +1,348 @@
-const file = require('fs').promises; // .promises (from Nodejs) signifies placeholder value thats gonna be available in the future 
+    const file = require('fs').promises; // .promises (from Nodejs) signifies placeholder value thats gonna be available in the future 
+    const path = require('path'); 
 
-// Airport Class
-class Airport { 
-    // Hard-coding the reference data provided on GitHub using a map
-    // maps airport code (String) to list (containing the airport name (Str), city (Str), latitude (decimal), and longitude (decimal) 
-    static ICAOCodes = {
-    "CYYZ": ["Toronto Pearson", "Toronto, ON", 43.68, -79.63], // longitude should be -ve because it's going West 
-    "CYVR": ["Vancouver International", "Vancouver, OBC", 49.19, -123.18],
-    "CYUL": ["Montreal-Trudeau", "Montreal, QC", 45.47, -73.74],
-    "CYYC": ["Calgary International", "Calgary, AB", 51.11, -114.02],
-    "CYOW": ["Ottawa Macdonald-Cartier", "Ottawa, ON", 45.32, -75.67],
-    "CYWG": ["Winnipeg Richardson", "Winnipeg, MB", 49.91, -97.24],
-    "CYHZ": ["Halifax Stanfield", "Halifax, NS", 44.88, -63.51],
-    "CYEG": ["Edmonton International", "Edmonton, AB", 53.31, -113.58],
-    "CYQB": ["Quebec City Jean Lesage", "Quebec City, QC", 46.79, -71.39],
-    "CYYJ": ["Victoria International", "Victoria, BC", 48.65, -123.43],
-    "CYYT": ["St. John's International", "St. John's, NL", 47.62, -52.75],
-    "CYXE": ["Saskatoon International", "Saskatoon, SK", 52.17, -106.70]
-    };
+    // Airport Class
+    class Airport { 
+        // Hard-coding the reference data provided on GitHub using a map
+        // maps airport code (String) to list (containing the airport name (Str), city (Str), latitude (decimal), and longitude (decimal) 
+        static ICAOCodes = {
+        "CYYZ": ["Toronto Pearson", "Toronto, ON", 43.68, -79.63], // longitude should be -ve because it's going West 
+        "CYVR": ["Vancouver International", "Vancouver, OBC", 49.19, -123.18],
+        "CYUL": ["Montreal-Trudeau", "Montreal, QC", 45.47, -73.74],
+        "CYYC": ["Calgary International", "Calgary, AB", 51.11, -114.02],
+        "CYOW": ["Ottawa Macdonald-Cartier", "Ottawa, ON", 45.32, -75.67],
+        "CYWG": ["Winnipeg Richardson", "Winnipeg, MB", 49.91, -97.24],
+        "CYHZ": ["Halifax Stanfield", "Halifax, NS", 44.88, -63.51],
+        "CYEG": ["Edmonton International", "Edmonton, AB", 53.31, -113.58],
+        "CYQB": ["Quebec City Jean Lesage", "Quebec City, QC", 46.79, -71.39],
+        "CYYJ": ["Victoria International", "Victoria, BC", 48.65, -123.43],
+        "CYYT": ["St. John's International", "St. John's, NL", 47.62, -52.75],
+        "CYXE": ["Saskatoon International", "Saskatoon, SK", 52.17, -106.70]
+        };
 
-    constructor(icaoCode) {
-        const AirportData = Airport.ICAOCodes[icaoCode];
-        if (!AirportData) {
-            throw new Error(`${icaoCode} could not be found`);
-        }
-
-        this.icaoCode = icaoCode;
-        this.name = AirportData[0];
-        this.city = AirportData[1];
-        this.latitude = AirportData[2];
-        this.longitude = AirportData[3];
-    }
-
-    static getAirport(icaoCode) {
-        return new Airport(icaoCode);
-    }
-} // end of Airport class
-
-
-class CommonWaypoint {
-    constructor(coords) {
-        // (for reference) this is the waypoint format from the github description: 
-        // 49.97N/110.935W  (Alberta/Saskatchewan border)
-        const [lat, long] = coords.split('/');
-        this.latitude = parseFloat(lat.replace(/[NS]/g, '')); 
-        this.longitude = parseFloat(long.replace(/[EW]/g, ''));
-        
-        if (lat.endsWith('S')) {
-            this.latitude = -this.latitude;
-        }
-        if (long.endsWith('W')) {
-            this.longitude = -this.longitude;
-        }
-    }
-}
-
-
-// Aircraft Type Class
-class AircraftType {
-    // combining the "Constraints" data with the "Aircraft Types" data 
-    static AircraftTypes = {
-        //Passenger Aircrafts
-            //Wide-body 
-           "Boeing 787-9": {
-                frame: "Wide-body",
-                constraints: {
-                    minAltitude: 31000, maxAltitude: 43000, minOptimalRange: 37000, maxOptimalRange: 41000,
-                    minCruiseSpeed: 480, maxCruiseSpeed: 505, minSpeed: 430, maxSpeed: 505
-                }
-            },
-            "Boeing 777-300ER": {
-                frame: "Wide-body",
-                constraints: {
-                    minAltitude: 31000, maxAltitude: 43000, minOptimalRange: 37000, maxOptimalRange: 41000,
-                    minCruiseSpeed: 480, maxCruiseSpeed: 505, minSpeed: 430, maxSpeed: 505
-                }
-            },
-            "Airbus A330": {
-                frame: "Wide-body",
-                constraints: {
-                    minAltitude: 31000, maxAltitude: 43000, minOptimalRange: 37000, maxOptimalRange: 41000,
-                    minCruiseSpeed: 480, maxCruiseSpeed: 505, minSpeed: 430, maxSpeed: 505
-                }
-            },
-            //Narrow-body
-            "Boeing 737-800": {
-                frame: "Narrow-body",
-                constraints: {
-                    minAltitude: 28000, maxAltitude: 39000, minOptimalRange: 33000, maxOptimalRange: 37000,
-                    minCruiseSpeed: 465, maxCruiseSpeed: 485, minSpeed: 415, maxSpeed: 505
-                }
-            },
-            "Boeing 737 MAX 8": {
-                frame: "Narrow-body",
-                constraints: {
-                    minAltitude: 28000, maxAltitude: 39000, minOptimalRange: 33000, maxOptimalRange: 37000,
-                    minCruiseSpeed: 465, maxCruiseSpeed: 485, minSpeed: 415, maxSpeed: 505
-                }
-            },
-            "Airbus A320": {
-                frame: "Narrow-body",
-                constraints: {
-                    minAltitude: 28000, maxAltitude: 39000, minOptimalRange: 33000, maxOptimalRange: 37000,
-                    minCruiseSpeed: 465, maxCruiseSpeed: 485, minSpeed: 415, maxSpeed: 505
-                }
-            },
-            "Airbus A321": {
-                frame: "Narrow-body",
-                constraints: {
-                    minAltitude: 28000, maxAltitude: 39000, minOptimalRange: 33000, maxOptimalRange: 37000,
-                    minCruiseSpeed: 465, maxCruiseSpeed: 485, minSpeed: 415, maxSpeed: 505
-                }
-            },
-            //Regional
-            "Dash 8-400": {
-                frame: "Regional",
-                constraints: {
-                    minAltitude: 22000, maxAltitude: 28000, minOptimalRange: 24000, maxOptimalRange: 26000,
-                    minCruiseSpeed: 360, maxCruiseSpeed: 360, minSpeed: 310, maxSpeed: 410
-                }
-            },
-            "Embraer E195-E2": {
-                frame: "Regional",
-                constraints: {
-                    minAltitude: 22000, maxAltitude: 28000, minOptimalRange: 24000, maxOptimalRange: 26000,
-                    minCruiseSpeed: 360, maxCruiseSpeed: 360, minSpeed: 310, maxSpeed: 410
-                }
-            },
-            "Airbus A220-300": {
-                frame: "Regional",
-                constraints: {
-                    minAltitude: 22000, maxAltitude: 28000, minOptimalRange: 24000, maxOptimalRange: 26000,
-                    minCruiseSpeed: 360, maxCruiseSpeed: 360, minSpeed: 310, maxSpeed: 410
-                }
-            },
-            //Cargo
-            "Boeing 767-300F": {
-                frame: "Regional",
-                constraints: {
-                    minAltitude: 28000, maxAltitude: 41000, minOptimalRange: 35000, maxOptimalRange: 39000,
-                    minCruiseSpeed: 460, maxCruiseSpeed: 480, minSpeed: 410, maxSpeed: 505
-                }
-            },
-            "Boeing 757-200F": {
-                frame: "Regional",
-                constraints: {
-                    minAltitude: 28000, maxAltitude: 41000, minOptimalRange: 35000, maxOptimalRange: 39000,
-                    minCruiseSpeed: 460, maxCruiseSpeed: 480, minSpeed: 410, maxSpeed: 505
-                }
-            },
-            "Airbus A300-600F": {
-                frame: "Regional",
-                constraints: {
-                    minAltitude: 28000, maxAltitude: 41000, minOptimalRange: 35000, maxOptimalRange: 39000,
-                    minCruiseSpeed: 460, maxCruiseSpeed: 480, minSpeed: 410, maxSpeed: 505
-                }
+        constructor(icaoCode) {
+            const AirportData = Airport.ICAOCodes[icaoCode];
+            if (!AirportData) {
+                throw new Error(`${icaoCode} could not be found`);
             }
-    };
 
-
-    constructor(aircraftType) {
-        const typeData = AircraftType.AircraftTypes[aircraftType];
-        if (!typeData) {
-            throw new Error(`${aircraftType} could not be found`);
+            this.icaoCode = icaoCode;
+            this.name = AirportData[0];
+            this.city = AirportData[1];
+            this.latitude = AirportData[2];
+            this.longitude = AirportData[3];
         }
 
-        this.aircraftType = aircraftType;
-        this.frame = typeData.frame;
-        this.constraints = typeData.constraints;
+        static getAirport(icaoCode) {
+            return new Airport(icaoCode);
+        }
+    } // end of Airport class
+
+
+    class CommonWaypoint {
+        constructor(coords) {
+            // (for reference) this is the waypoint format from the github description: 
+            // 49.97N/110.935W  (Alberta/Saskatchewan border)
+            const [lat, long] = coords.split('/');
+            this.latitude = parseFloat(lat.replace(/[NS]/g, '')); 
+            this.longitude = parseFloat(long.replace(/[EW]/g, ''));
+            
+            if (lat.endsWith('S')) {
+                this.latitude = -this.latitude;
+            }
+            if (long.endsWith('W')) {
+                this.longitude = -this.longitude;
+            }
+        }
     }
 
-    //helper methods
-    static getAircraftType(aircraftType) {
-        return new AircraftType(aircraftType);
+
+    // Aircraft Type Class
+    class AircraftType {
+        // combining the "Constraints" data with the "Aircraft Types" data 
+        static AircraftTypes = {
+            //Passenger Aircrafts
+                //Wide-body 
+            "Boeing 787-9": {
+                    frame: "Wide-body",
+                    constraints: {
+                        minAltitude: 31000, maxAltitude: 43000, minOptimalRange: 37000, maxOptimalRange: 41000,
+                        minCruiseSpeed: 480, maxCruiseSpeed: 505, minSpeed: 430, maxSpeed: 505
+                    }
+                },
+                "Boeing 777-300ER": {
+                    frame: "Wide-body",
+                    constraints: {
+                        minAltitude: 31000, maxAltitude: 43000, minOptimalRange: 37000, maxOptimalRange: 41000,
+                        minCruiseSpeed: 480, maxCruiseSpeed: 505, minSpeed: 430, maxSpeed: 505
+                    }
+                },
+                "Airbus A330": {
+                    frame: "Wide-body",
+                    constraints: {
+                        minAltitude: 31000, maxAltitude: 43000, minOptimalRange: 37000, maxOptimalRange: 41000,
+                        minCruiseSpeed: 480, maxCruiseSpeed: 505, minSpeed: 430, maxSpeed: 505
+                    }
+                },
+                //Narrow-body
+                "Boeing 737-800": {
+                    frame: "Narrow-body",
+                    constraints: {
+                        minAltitude: 28000, maxAltitude: 39000, minOptimalRange: 33000, maxOptimalRange: 37000,
+                        minCruiseSpeed: 465, maxCruiseSpeed: 485, minSpeed: 415, maxSpeed: 505
+                    }
+                },
+                "Boeing 737 MAX 8": {
+                    frame: "Narrow-body",
+                    constraints: {
+                        minAltitude: 28000, maxAltitude: 39000, minOptimalRange: 33000, maxOptimalRange: 37000,
+                        minCruiseSpeed: 465, maxCruiseSpeed: 485, minSpeed: 415, maxSpeed: 505
+                    }
+                },
+                "Airbus A320": {
+                    frame: "Narrow-body",
+                    constraints: {
+                        minAltitude: 28000, maxAltitude: 39000, minOptimalRange: 33000, maxOptimalRange: 37000,
+                        minCruiseSpeed: 465, maxCruiseSpeed: 485, minSpeed: 415, maxSpeed: 505
+                    }
+                },
+                "Airbus A321": {
+                    frame: "Narrow-body",
+                    constraints: {
+                        minAltitude: 28000, maxAltitude: 39000, minOptimalRange: 33000, maxOptimalRange: 37000,
+                        minCruiseSpeed: 465, maxCruiseSpeed: 485, minSpeed: 415, maxSpeed: 505
+                    }
+                },
+                //Regional
+                "Dash 8-400": {
+                    frame: "Regional",
+                    constraints: {
+                        minAltitude: 22000, maxAltitude: 28000, minOptimalRange: 24000, maxOptimalRange: 26000,
+                        minCruiseSpeed: 360, maxCruiseSpeed: 360, minSpeed: 310, maxSpeed: 410
+                    }
+                },
+                "Embraer E195-E2": {
+                    frame: "Regional",
+                    constraints: {
+                        minAltitude: 22000, maxAltitude: 28000, minOptimalRange: 24000, maxOptimalRange: 26000,
+                        minCruiseSpeed: 360, maxCruiseSpeed: 360, minSpeed: 310, maxSpeed: 410
+                    }
+                },
+                "Airbus A220-300": {
+                    frame: "Regional",
+                    constraints: {
+                        minAltitude: 22000, maxAltitude: 28000, minOptimalRange: 24000, maxOptimalRange: 26000,
+                        minCruiseSpeed: 360, maxCruiseSpeed: 360, minSpeed: 310, maxSpeed: 410
+                    }
+                },
+                //Cargo
+                "Boeing 767-300F": {
+                    frame: "Regional",
+                    constraints: {
+                        minAltitude: 28000, maxAltitude: 41000, minOptimalRange: 35000, maxOptimalRange: 39000,
+                        minCruiseSpeed: 460, maxCruiseSpeed: 480, minSpeed: 410, maxSpeed: 505
+                    }
+                },
+                "Boeing 757-200F": {
+                    frame: "Regional",
+                    constraints: {
+                        minAltitude: 28000, maxAltitude: 41000, minOptimalRange: 35000, maxOptimalRange: 39000,
+                        minCruiseSpeed: 460, maxCruiseSpeed: 480, minSpeed: 410, maxSpeed: 505
+                    }
+                },
+                "Airbus A300-600F": {
+                    frame: "Regional",
+                    constraints: {
+                        minAltitude: 28000, maxAltitude: 41000, minOptimalRange: 35000, maxOptimalRange: 39000,
+                        minCruiseSpeed: 460, maxCruiseSpeed: 480, minSpeed: 410, maxSpeed: 505
+                    }
+                }
+        };
+
+
+        constructor(aircraftType) {
+            const typeData = AircraftType.AircraftTypes[aircraftType];
+            if (!typeData) {
+                throw new Error(`${aircraftType} could not be found`);
+            }
+
+            this.aircraftType = aircraftType;
+            this.frame = typeData.frame;
+            this.constraints = typeData.constraints;
+        }
+
+        //helper methods
+        static getAircraftType(aircraftType) {
+            return new AircraftType(aircraftType);
+        }
+
+        isInAltitudeRange (altitude) {
+            return altitude >= this.constraints.minAltitude && altitude <= this.constraints.maxAltitude;
+        }
+
+        isOptimal (altitude) {
+            return altitude >= this.constraints.minOptimalRange && altitude <= this.constraints.maxOptimalRange;
+        }
+
+        isInSpeedRange(speed) {
+            return speed >= this.constraints.minSpeed && speed <= this.constraints.maxSpeed;
+        }
+    } //end of AircraftType class
+
+
+    /* (Just for reference) JSON data structure:
+    [
+    {
+        "ACID": "ACA101",
+        "Plane type": "Boeing 787-9",
+        "route": "49.97N/110.935W 49.64N/92.114W",
+        "altitude": 37000,
+        "departure airport": "CYYZ",
+        "arrival airport": "CYVR",
+        "departure time": 1736244000,
+        "aircraft speed": 485.0,
+        "passengers": 280,
+        "is_cargo": false
+    }
+    ]
+    */
+
+    // Flight Class
+    class Flight {
+        constructor(flightData) {
+            this.acid = flightData.ACID;
+            this.aircraftType = new AircraftType(flightData["Plane type"]);
+
+            // not really sure what/how to assign to  "route" variable yet
+            // this.route = 
+            this.altitude = flightData["altitude"];
+            this.departureAirport = Airport.getAirport(flightData["departure airport"]);
+            this.arrivalAirport = Airport.getAirport(flightData["arrival airport"]);
+            this.departureTime = new Date(flightData["departure time"] * 1000); // converting from seconds to milliseconds
+            this.aircraftSpeed = flightData["aircraft speed"];
+            this.passengers = flightData["passengers"];
+            this.isCargo = flightData["is_cargo"];
+        }
+    } // end of Flight class
+
+
+    //Storing Flights 
+    class FlightLog {
+        constructor() {
+            this.flights = []; 
+        }
+
+        addFlight(flightInfo) {
+            try {
+                const flightObj = new Flight(flightInfo); 
+                this.flights.push(flightObj); // adding flight to an array that stores the flights 
+                return flightObj;
+            
+            } catch (error) {
+                console.error(`Could not add flight ${flightInfo}to flight array`, error.message);
+                return null; 
+            }
+        }
+
+        getFlight(acid) {
+            return this.flights.find(flight=> flight.acid === acid);
+        }
+
+        getAirport(icaoCode) {
+            return this.flights.filter(flight => flight.departureAirport.icaoCode === icaoCode || flight.arrivalAirport.icaoCode === icaoCode);
+        }
+
+        getAircraftType(aircraftType) {
+            return this.flights.filter(flight => flight.aircraftType.aircraftType === aircraftType);
+        
+        }
+
+        // could displat all total state of all the flights (i.e., total number of passengers, the cargo, etc.,?)
+
+
     }
 
-     isInAltitudeRange (altitude) {
-        return altitude >= this.constraints.minAltitude && altitude <= this.constraints.maxAltitude;
-    }
+    // Reading in the JSON files 
+    // async function readFile(fileName) {
+    //     try {
+    //         // Reaad in JSON file lines 
+    //         const flightData = await file.readFile(fileName, 'utf8');// using await because used promise at the first line, commencing reading process
+    //         console.log(`Successfully read ${fileName}`); // for debugging 
+            
+    //         const flightReadIn =JSON.parse(flightData);
 
-    isOptimal (altitude) {
-        return altitude >= this.constraints.minOptimalRange && altitude <= this.constraints.maxOptimalRange;
-    }
+    //         // create FlightLog instance
+    //         const flightLogInstance = new FlightLog();
+    //         flightLogInstance.addFlight(flightReadIn);
 
-     isInSpeedRange(speed) {
-        return speed >= this.constraints.minSpeed && speed <= this.constraints.maxSpeed;
-    }
-} //end of AircraftType class
+    //         //print msg here
+
+    //         return flightLogInstance;
+
+            
+    //     } catch (error) {
+    //         console.error(` could not read ${fileName}:`, error.message);
+    //         throw error;
+    //     }
+
+    // }
+        async function readFile(fileName) {
+            try {
+                const flightData = await file.readFile(fileName, 'utf8');
+                const flightReadIn = JSON.parse(flightData);
+
+                const flightLogInstance = new FlightLog();
+
+                for (const flight of flightReadIn) {
+                    flightLogInstance.addFlight(flight);
+                }
+
+                console.log(`Loaded ${flightLogInstance.flights.length} flights`);
+
+                return flightLogInstance;
+
+            } catch (error) {
+                console.error(`Could not read ${fileName}:`, error.message);
+                throw error;
+            }
+        }
 
 
-/* (Just for reference) JSON data structure:
-[
-  {
-    "ACID": "ACA101",
-    "Plane type": "Boeing 787-9",
-    "route": "49.97N/110.935W 49.64N/92.114W",
-    "altitude": 37000,
-    "departure airport": "CYYZ",
-    "arrival airport": "CYVR",
-    "departure time": 1736244000,
-    "aircraft speed": 485.0,
-    "passengers": 280,
-    "is_cargo": false
-  }
-]
-*/
+    // async function main() {
+    //     try {
+    //         const flightLog = await readFile('canadian_flights_2500.json');
 
-// Flight Class
-class Flight {
-    constructor(flightData) {
-        this.acid = flightData.ACID;
-        this.aircraftType = new AircraftType(flightData["Plane type"]);
+    //         //const flight = flightLog.getFlight('ACA101');
+    //     } catch (error) {
+    //         console.error('could not run Main:', error.message);
+    //         throw error;
+    //     }
+    // }
+        async function main() {
+            try {
+                // find file path regardless of where script is run from
+                const filePath = path.join(
+                    __dirname,
+                    'input',
+                    'canadian_flights_250.json'
+                );
 
-        // not really sure what/how to assign to  "route" variable yet
-        // this.route = 
-        this.altitude = flightData["altitude"];
-        this.departureAirport = Airport.getAirport(flightData["departure airport"]);
-        this.arrivalAirport = Airport.getAirport(flightData["arrival airport"]);
-        this.departureTime = new Date(flightData["departure time"] * 1000); // converting from seconds to milliseconds
-        this.aircraftSpeed = flightData["aircraft speed"];
-        this.passengers = flightData["passengers"];
-        this.isCargo = flightData["is_cargo"];
-    }
-} // end of Flight class
+                console.log('Using data file:', filePath);
+
+                const flightLog = await readFile(filePath);
+
+                console.log('Total flights:', flightLog.flights.length);
+
+                const testFlight = flightLog.getFlight('FDX227');
+                console.log('Test flight FDX227:', testFlight);
+
+            } catch (error) {
+                console.error('Could not run main:', error.message);
+            }
+        }
+
+        main(); //calling main function
+
+
+        
+
