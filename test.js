@@ -1,5 +1,6 @@
     const file = require('fs').promises; // .promises (from Nodejs) signifies placeholder value thats gonna be available in the future 
     const path = require('path'); 
+    const { checkConflicts } = require("./main.js");
 
     // Airport Class
     class Airport { 
@@ -318,6 +319,29 @@
     //         throw error;
     //     }
     // }
+
+    function flightToPlaneShape(flight, simStartUnixSec) {
+  //flight.departureTime is a date object in flight, so changes to milliseconds
+        const departUnixSec = flight.departureTime.getTime() / 1000;
+
+        //information transferred to conflict finding logic
+        return {
+        id: flight.acid,
+
+        //main.js takes {lat, lon}
+        from: { lat: flight.departureAirport.latitude, lon: flight.departureAirport.longitude },
+        to:   { lat: flight.arrivalAirport.latitude,   lon: flight.arrivalAirport.longitude },
+
+        altitudeFt: flight.altitude,
+
+        //main.js takes speed in knots
+        speed: flight.aircraftSpeed,
+
+        //main.js expects departureTime seconds since start of simulation
+        departureTime: departUnixSec - simStartUnixSec
+    };
+    }
+
         async function main() {
             try {
                 // find file path regardless of where script is run from
@@ -336,12 +360,54 @@
                 const testFlight = flightLog.getFlight('FDX227');
                 console.log('Test flight FDX227:', testFlight);
 
+                //converting information from flightLog into info that main.js can understand
+                const simStartUnixSec = Math.min(...flightLog.flights.map(f => f.departureTime.getTime() / 1000));
+                const planes = flightLog.flights.map(f => flightToPlaneShape(f, simStartUnixSec));
+
+                console.log("Planes ready for conflict sim:", planes.length);
+
+                //starts the simulation
+                let T = 0;            // seconds since sim start
+                const tickMs = 1000;  // set to 100 for better higher accuracy, but slower runtime
+
+                // prevents printing the same conflict every tick
+                const activeConflictKeys = new Set();
+
+                setInterval(() => {
+                const activeCount = planes.filter(p => T >= p.departureTime).length;
+
+                if (T % 60 === 0) { // prints every 60 seconds of sim time
+                console.log(`T=${T}s | active planes (departed): ${activeCount}`);
+                }
+                const conflicts = checkConflicts(planes, T);
+
+                const nowKeys = new Set();
+
+                for (const c of conflicts) {
+                    const key = [c.planeA, c.planeB].sort().join("|");
+                    nowKeys.add(key);
+
+                    if (!activeConflictKeys.has(key)) {
+                    console.log(`LOSS OF SEPARATION START at T=${c.time}s between ${c.planeA} and ${c.planeB}`);
+                    }
+                }
+
+                for (const key of activeConflictKeys) {
+                    if (!nowKeys.has(key)) {
+                    console.log(`LOSS OF SEPARATION END at T=${T}s for ${key}`);
+                    }
+                }
+
+                activeConflictKeys.clear();
+                for (const key of nowKeys) activeConflictKeys.add(key);
+
+                T += tickMs / 1000;
+                }, tickMs);
+
+
             } catch (error) {
                 console.error('Could not run main:', error.message);
             }
         }
 
         main(); //calling main function
-
-
-        

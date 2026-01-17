@@ -160,52 +160,35 @@ function checkConflicts(planes, T) {
 }
 
 //main loop
-const planes = [
-  {
-    id: "A1",
-    from: { lat: 45.4215, lon: -75.6972 },
-    to:   { lat: 43.6532, lon: -79.3832 },
-    departureTime: 10,      // seconds
-    speedMps: 250,          // ~900 km/h
-    altitudeFt: 30000
-  },
-  {
-    id: "B2",
-    from: { lat: 45.5, lon: -75.6 },
-    to:   { lat: 43.7, lon: -79.4 },
-    departureTime: 12,
-    speedMps: 240,
-    altitudeFt: 31000
-  }
-];
-
 //global clock
 let T = 0;
 const tickMs = 1000;
 
-setInterval(() => {
-  const conflicts = checkConflicts(planes, T);
+// setInterval(() => {
+//   const conflicts = checkConflicts(planes, T);
 
-  const nowKeys = new Set();
-  for (const c of conflicts) {
-    const key = [c.planeA, c.planeB].sort().join("|");
-    nowKeys.add(key);
+//   const nowKeys = new Set();
+//   for (const c of conflicts) {
+//     const key = [c.planeA, c.planeB].sort().join("|");
+//     nowKeys.add(key);
 
-    //only prints the conflict zone one time
-    if (!activeConflictKeys.has(key)) {
-      console.log(`LOSS OF SEPARATION START at T=${c.time}s between ${c.planeA} and ${c.planeB}`);
-    }
-  }
+//     //only prints the conflict zone one time
+//     if (!activeConflictKeys.has(key)) {
+//       console.log(`LOSS OF SEPARATION START at T=${c.time}s between ${c.planeA} and ${c.planeB}`);
+//     }
+//   }
 
-  //conflicts that ended
-  for (const key of activeConflictKeys) {
-    if (!nowKeys.has(key)) {
-      console.log(`LOSS OF SEPARATION END at T=${T}s for ${key}`);
-    }
-  }
+//   //conflicts that ended
+//   for (const key of activeConflictKeys) {
+//     if (!nowKeys.has(key)) {
+//       console.log(`LOSS OF SEPARATION END at T=${T}s for ${key}`);
+//     }
+//   }
 
-  activeConflictKeys.clear();
-  for (const key of nowKeys) activeConflictKeys.add(key);
+//   activeConflictKeys.clear();
+//   for (const key of nowKeys) activeConflictKeys.add(key);
 
-  T += tickMs / 1000;
-}, tickMs);
+//   T += tickMs / 1000;
+// }, tickMs);
+
+module.exports = { checkConflicts };
