@@ -179,16 +179,11 @@ let T = 0;
 const tickMs = 1000;
 
 setInterval(() => {
-  // 1) Check conflicts at this time
   const conflicts = checkConflicts(planes, T);
-
-  // 2) Print conflicts
   for (const c of conflicts) {
     console.log(
       `LOSS OF SEPARATION at T=${c.time}s between ${c.planeA} and ${c.planeB}`
     );
   }
-
-  // 3) Advance global clock
   T += tickMs / 1000;
 }, tickMs);
