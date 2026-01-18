@@ -1,66 +1,112 @@
 body {
-  background-color: #add8e6;
-  color: beige;
+background-color: #add8e6;
+color: beige;
 }
 
 
 .mainPageDrawings {
-  #title {
-      position: absolute;
-      margin-left: auto;
-      margin-right: auto;
-      width: 50%;
-      z-index: 2;
-      margin-left: 25%;
-  }
+#title {
+    position: absolute;
+    margin-left: auto;
+    margin-right: auto;
+    width: 50%;
+    z-index: 2;
+    margin-left: 25%;
+}
 }
 
 .cloudAnimation {
-   position:absolute;
+ position:absolute;
 }
 .cloudAnimation2 {
-   position:absolute;
+ position:absolute;
 }
 
-.backgroundBox {
-   margin-left: -1%;
-   position:absolute;
-   height: 900px;
-   width: 1950px;
-   background-color: #d9f0ff;
+
+
+
+#upload {
+ font-size: 35px;
+ color:black;
+ width: 500px;
+ height: 300px;
+ padding: 30px;
+ background: white;
+ text-align: center;
+ border-radius: 20px;
+ margin-left: 24%;
+ margin-top: 20%;
+  #upload-img {
+  margin-top: 3%;
+  width: 100%;
+  height:80%;
+  border-radius:20px;
+  border:2px dashed #bbb5ff;
+  background: #f7f8ff;
+     #upload-icon{
+        width: 350px;
+        height: 250px;
+     }
+ }
 }
+
+
+
+
 
 
 .conflicts {
-   position:absolute;
-   background-color: #36454f;
-   border-radius: 25px 0 0 25px;
-   font-size: 50px;
-  
-   /*scrollability*/
-   margin-top: 2%;
-   margin-left: 5%;
-   height: 800px;
-   width: 1050px;
-   overflow-y: scroll;
-
-
+ position:absolute;
+ background-color: #36454f;
+ border-radius: 25px 0 0 25px;
+ font-size: 50px;
+  /*scrollability*/
+ margin-top: 2%;
+ margin-left: 5%;
+ height: 800px;
+ width: 1050px;
+ overflow-y: scroll;
 }
 
 
 .solutions {
-   position:absolute;
-   background-color: white;
-   border-radius: 0 25px 25px 0;
-   font-size: 50px;
-   color: black;
+ position:absolute;
+ background-color: white;
+ border-radius: 0 25px 25px 0;
+ font-size: 50px;
+ color: black;
 
 
-   /*scrollability*/
-   margin-top: 2%;
-   margin-left: 59%;
-   height: 800px;
-   width: 660px;
-   overflow-y: scroll;
+ /*scrollability*/
+ margin-top: 2%;
+ margin-left: 59%;
+ height: 800px;
+ width: 660px;
+ overflow-y: scroll;
+}
+
+
+
+
+
+
+
+
+/*======================================================================*/
+/*Formatting for device compaitiibility (macbook screens up to monitors)*/
+/*MACBOOK SCREEN*/
+@media only screen and (min-width: 1200px) {
+.cloudAnimation {
+}
+}
+
+
+
+
+/*Roughly monitor s*/
+@media only screen and (min-width: 1600px) {
+
+
+
 
 }
