@@ -1,0 +1,38 @@
+[
+  {
+    "ACID": "ACA821",
+    "Plane type": "Boeing 787-9",
+    "route": "50.77N/115.66W",
+    "altitude": 28000,
+    "departure airport": "CYVR",
+    "arrival airport": "CYYC",
+    "departure time": 1767780000,
+    "aircraft speed": 500.0,
+    "passengers": 229,
+    "is_cargo": false
+  },
+  {
+    "ACID": "WJA134",
+    "Plane type": "Boeing 737 MAX 8",
+    "route": "46.15N/84.33W",
+    "altitude": 28000,
+    "departure airport": "CYOW",
+    "arrival airport": "CYUL",
+    "departure time": 1767780240,
+    "aircraft speed": 470.0,
+    "passengers": 142,
+    "is_cargo": false
+  },
+  {
+    "ACID": "ACA135",
+    "Plane type": "Boeing 777-300ER",
+    "route": "49.97N/110.935W",
+    "altitude": 36000,
+    "departure airport": "CYYT",
+    "arrival airport": "CYQB",
+    "departure time": 1767782340,
+    "aircraft speed": 488.0,
+    "passengers": 392,
+    "is_cargo": false
+  }
+]
