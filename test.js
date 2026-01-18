@@ -1,5 +1,3 @@
-// Uses window.checkConflicts from main.js
-
 class Airport {
   static ICAOCodes = {
     "CYYZ": ["Toronto Pearson", "Toronto, ON", 43.68, -79.63],
@@ -33,22 +31,80 @@ class Airport {
 
 class AircraftType {
   static AircraftTypes = {
-    "Boeing 787-9": { frame: "Wide-body", constraints: { minAltitude: 31000, maxAltitude: 43000, minOptimalRange: 37000, maxOptimalRange: 41000, minCruiseSpeed: 480, maxCruiseSpeed: 505, minSpeed: 430, maxSpeed: 505 } },
-    "Boeing 777-300ER": { frame: "Wide-body", constraints: { minAltitude: 31000, maxAltitude: 43000, minOptimalRange: 37000, maxOptimalRange: 41000, minCruiseSpeed: 480, maxCruiseSpeed: 505, minSpeed: 430, maxSpeed: 505 } },
-    "Airbus A330": { frame: "Wide-body", constraints: { minAltitude: 31000, maxAltitude: 43000, minOptimalRange: 37000, maxOptimalRange: 41000, minCruiseSpeed: 480, maxCruiseSpeed: 505, minSpeed: 430, maxSpeed: 505 } },
 
-    "Boeing 737-800": { frame: "Narrow-body", constraints: { minAltitude: 28000, maxAltitude: 39000, minOptimalRange: 33000, maxOptimalRange: 37000, minCruiseSpeed: 465, maxCruiseSpeed: 485, minSpeed: 415, maxSpeed: 505 } },
-    "Boeing 737 MAX 8": { frame: "Narrow-body", constraints: { minAltitude: 28000, maxAltitude: 39000, minOptimalRange: 33000, maxOptimalRange: 37000, minCruiseSpeed: 465, maxCruiseSpeed: 485, minSpeed: 415, maxSpeed: 505 } },
-    "Airbus A320": { frame: "Narrow-body", constraints: { minAltitude: 28000, maxAltitude: 39000, minOptimalRange: 33000, maxOptimalRange: 37000, minCruiseSpeed: 465, maxCruiseSpeed: 485, minSpeed: 415, maxSpeed: 505 } },
-    "Airbus A321": { frame: "Narrow-body", constraints: { minAltitude: 28000, maxAltitude: 39000, minOptimalRange: 33000, maxOptimalRange: 37000, minCruiseSpeed: 465, maxCruiseSpeed: 485, minSpeed: 415, maxSpeed: 505 } },
+    //Wide-body planes
+    "Boeing 787-9": { 
+      frame: "Wide-body", 
+      constraints: { 
+        minAltitude: 31000, maxAltitude: 43000, minOptimalRange: 37000, maxOptimalRange: 41000, minCruiseSpeed: 480, maxCruiseSpeed: 505, minSpeed: 430, maxSpeed: 505 
+      } 
+    },
+    "Boeing 777-300ER": { 
+      frame: "Wide-body", 
+      constraints: { 
+        minAltitude: 31000, maxAltitude: 43000, minOptimalRange: 37000, maxOptimalRange: 41000, minCruiseSpeed: 480, maxCruiseSpeed: 505, minSpeed: 430, maxSpeed: 505 
+      } 
+    },
+    "Airbus A330": { 
+      frame: "Wide-body", 
+      constraints: { 
+        minAltitude: 31000, maxAltitude: 43000, minOptimalRange: 37000, maxOptimalRange: 41000, minCruiseSpeed: 480, maxCruiseSpeed: 505, minSpeed: 430, maxSpeed: 505 
+      } 
+    },
+//Narrow-body planes
+    "Boeing 737-800": { 
+      frame: "Narrow-body", 
+      constraints: { 
+        minAltitude: 28000, maxAltitude: 39000, minOptimalRange: 33000, maxOptimalRange: 37000, minCruiseSpeed: 465, maxCruiseSpeed: 485, minSpeed: 415, maxSpeed: 505 
+      } 
+    },
+    "Boeing 737 MAX 8": { 
+      frame: "Narrow-body", 
+      constraints: { 
+        minAltitude: 28000, maxAltitude: 39000, minOptimalRange: 33000, maxOptimalRange: 37000, minCruiseSpeed: 465, maxCruiseSpeed: 485, minSpeed: 415, maxSpeed: 505 
+      } },
+    "Airbus A320": { 
+      frame: "Narrow-body", 
+      constraints: { 
+        minAltitude: 28000, maxAltitude: 39000, minOptimalRange: 33000, maxOptimalRange: 37000, minCruiseSpeed: 465, maxCruiseSpeed: 485, minSpeed: 415, maxSpeed: 505 
+      } 
+    },
+    "Airbus A321": { 
+      frame: "Narrow-body", 
+      constraints: { 
+        minAltitude: 28000, maxAltitude: 39000, minOptimalRange: 33000, maxOptimalRange: 37000, minCruiseSpeed: 465, maxCruiseSpeed: 485, minSpeed: 415, maxSpeed: 505 
+      }},
 
-    "Dash 8-400": { frame: "Regional", constraints: { minAltitude: 22000, maxAltitude: 28000, minOptimalRange: 24000, maxOptimalRange: 26000, minCruiseSpeed: 360, maxCruiseSpeed: 360, minSpeed: 310, maxSpeed: 410 } },
-    "Embraer E195-E2": { frame: "Regional", constraints: { minAltitude: 22000, maxAltitude: 28000, minOptimalRange: 24000, maxOptimalRange: 26000, minCruiseSpeed: 360, maxCruiseSpeed: 360, minSpeed: 310, maxSpeed: 410 } },
-    "Airbus A220-300": { frame: "Regional", constraints: { minAltitude: 22000, maxAltitude: 28000, minOptimalRange: 24000, maxOptimalRange: 26000, minCruiseSpeed: 360, maxCruiseSpeed: 360, minSpeed: 310, maxSpeed: 410 } },
+    //Regional planes
+    "Dash 8-400": { 
+      frame: "Regional", 
+      constraints: { 
+        minAltitude: 22000, maxAltitude: 28000, minOptimalRange: 24000, maxOptimalRange: 26000, minCruiseSpeed: 360, maxCruiseSpeed: 360, minSpeed: 310, maxSpeed: 410 
 
-    "Boeing 767-300F": { frame: "Regional", constraints: { minAltitude: 28000, maxAltitude: 41000, minOptimalRange: 35000, maxOptimalRange: 39000, minCruiseSpeed: 460, maxCruiseSpeed: 480, minSpeed: 410, maxSpeed: 505 } },
-    "Boeing 757-200F": { frame: "Regional", constraints: { minAltitude: 28000, maxAltitude: 41000, minOptimalRange: 35000, maxOptimalRange: 39000, minCruiseSpeed: 460, maxCruiseSpeed: 480, minSpeed: 410, maxSpeed: 505 } },
-    "Airbus A300-600F": { frame: "Regional", constraints: { minAltitude: 28000, maxAltitude: 41000, minOptimalRange: 35000, maxOptimalRange: 39000, minCruiseSpeed: 460, maxCruiseSpeed: 480, minSpeed: 410, maxSpeed: 505 } },
+      } 
+    },
+    "Embraer E195-E2": { 
+      frame: "Regional", 
+      constraints: { 
+        minAltitude: 22000, maxAltitude: 28000, minOptimalRange: 24000, maxOptimalRange: 26000, minCruiseSpeed: 360, maxCruiseSpeed: 360, minSpeed: 310, maxSpeed: 410   
+      } 
+    },
+    "Airbus A220-300": { 
+      frame: "Regional", 
+      constraints: { 
+        minAltitude: 22000, maxAltitude: 28000, minOptimalRange: 24000, maxOptimalRange: 26000, minCruiseSpeed: 360, maxCruiseSpeed: 360, minSpeed: 310, maxSpeed: 410 
+      } 
+    },
+
+    "Boeing 767-300F": { 
+      frame: "Regional", 
+      constraints: { 
+        minAltitude: 28000, maxAltitude: 41000, minOptimalRange: 35000, maxOptimalRange: 39000, minCruiseSpeed: 460, maxCruiseSpeed: 480, minSpeed: 410, maxSpeed: 505 } },
+    "Boeing 757-200F": { 
+      frame: "Regional", 
+      constraints: { minAltitude: 28000, maxAltitude: 41000, minOptimalRange: 35000, maxOptimalRange: 39000, minCruiseSpeed: 460, maxCruiseSpeed: 480, minSpeed: 410, maxSpeed: 505 } },
+    "Airbus A300-600F": { frame: "Regional", 
+      constraints: { minAltitude: 28000, maxAltitude: 41000, minOptimalRange: 35000, maxOptimalRange: 39000, minCruiseSpeed: 460, maxCruiseSpeed: 480, minSpeed: 410, maxSpeed: 505 } },
   };
 
   constructor(type) {
@@ -274,7 +330,7 @@ async function runInBrowser(flightArray, log) {
       }
     }
 
-    // Yield every 50 sim seconds so the UI updates “in a timely fashion”
+    // Yield every 50 sim seconds so the UI updates in a timely fashion
     if (T % 50 === 0) await yieldToUI();
   }
 

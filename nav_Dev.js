@@ -4,22 +4,25 @@ const simulationText = document.getElementById("simulationText");
 
 const solutionsPendingImg = document.getElementById("solutionsPending");
 const noSolutionsImg = document.getElementById("noSolutionsAnimation");
+const loadingSolutionsImg = document.getElementById("LoadingSolutionsAnimation");
 
+// there are three different solution image transitions: pending (which is the default), noSolutions, and loading (animated)
 function setSolutionState(state) {
-  // state: "pending" | "running" | "noSolutions" | "hasConflicts"
   if (solutionsPendingImg) {
     solutionsPendingImg.style.display =(state === "pending") ? "block": "none";
   }
   if (noSolutionsImg) {
     noSolutionsImg.style.display = (state === "noSolutions") ? "block": "none";
   }
+  if (loadingSolutionsImg) {
+    loadingSolutionsImg.style.display = (state === "loading") ? "block": "none";
+  }
 
-  // If you want text hidden in pending state, you can do:
+  // in solutions container, hiding text while pending
   if (simulationText) {
     simulationText.style.display = (state === "pending") ? "none": "block";
   }
 }
-
 setSolutionState("pending"); // default solutions image
 
 function makeLogger() {
@@ -49,7 +52,7 @@ input.addEventListener("change", async (e) => {
   simulationText.innerHTML = "";
 
   // update right-side state while running
-  setSolutionState("running");
+  setSolutionState("loading");
 
   const logger = makeLogger();
 
@@ -71,7 +74,7 @@ input.addEventListener("change", async (e) => {
         <p><strong>Total conflicts:</strong> 0</p>
       `;
     } else {
-      setSolutionState("hasConflicts");
+      setSolutionState("loading");
       simulationText.innerHTML = `
         <h2>Summary</h2>
         <p><strong>Total flights:</strong> ${result.totalFlights}</p>

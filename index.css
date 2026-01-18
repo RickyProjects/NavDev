@@ -21,6 +21,22 @@ color: black;
  position:absolute;
 }
 
+#solutionsPending {
+ max-width: 70%;
+ height: auto;
+ margin-top: 40%;
+ margin-left: 13.5%;
+}
+#noSolutionsAnimation {
+max-width: 70%;
+ height: auto;
+ margin-top: 30%;
+ margin-left: 13.5%;
+}
+#LoadingSolutionsAnimation {
+ margin-top: 40%;
+}
+
 #upload {
  font-size: 35px;
  color:black;
@@ -33,16 +49,16 @@ color: black;
  margin-left: 24%;
  margin-top: 20%;
   #upload-img {
-  margin-top: 3%;
-  width: 100%;
-  height:80%;
-  border-radius:20px;
-  border:2px dashed #bbb5ff;
-  background: #f7f8ff;
-     #upload-icon{
-        width: 350px;
-        height: 250px;
-     }
+    margin-top: 3%;
+    width: 100%;
+    height:80%;
+    border-radius:20px;
+    border:2px dashed #bbb5ff;
+    background: #f7f8ff;
+        #upload-icon{
+            width: 350px;
+            height: 250px;
+        }
  }
 }
 

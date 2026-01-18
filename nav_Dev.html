@@ -24,6 +24,7 @@
         </label>
       </div>
 
+      <!-- simulation output in text form, pre-setting the text attributes before it generates -->
       <pre id="emptySimText" style="
         margin: 20px;
         padding: 15px;
@@ -43,9 +44,10 @@
       <div id="simulationText" style="padding: 20px; font-size: 16px;"></div>
       <img id="solutionsPending" src="mainPageAssets/uploadSolutionsFirstMsg.png" style="width: 100%; display:block;"/>
       <img id="noSolutionsAnimation" src="mainPageAssets/noSolutionsAnimation.png" style="width: 100%; display:none;"/>
+      <img id="LoadingSolutionsAnimation" src="mainPageAssets/loadingSolutionsAnim.png" style="width: 100%; display:none;"/>
+
     </div>
 
-    <!-- IMPORTANT: load main.js first (defines window.checkConflicts) -->
     <script src="main.js"></script>
     <script src="test.js"></script>
     <script src="nav_Dev.js"></script>
