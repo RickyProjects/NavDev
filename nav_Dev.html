@@ -1,78 +1,51 @@
 <!DOCTYPE html>
 <html>
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Hackathon 2026 Canada Nav Prompt</title>
-<link href="index.css" rel="stylesheet" type="text/css" media="all">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Hackathon 2026 Canada Nav Prompt</title>
+  <link href="index.css" rel="stylesheet" type="text/css" media="all">
 </head>
 
-
-
-
-
-
-
-
-<!--Main Page Body-->
 <body>
-<div class ="mainPageDrawings">
+  <div class="mainPageDrawings">
     <img id="title" src="mainPageAssets/flysafeTitle.png">
     <img id="cloudAnimation" src="mainPageAssets/Cloud_Anim.png">
     <img id="cloudAnimation2" src="mainPageAssets/Cloud_Anim2.png">
-</div>
+  </div>
 
-
-
-
-<div class="conflicts" id="conflictContainer">
+  <div class="conflicts" id="conflictContainer">
     <div class="uploadContainer" id="upload">
-        <label for="input-file">
-          <input type="file" accept="application/json" id="input-file">
-         
-          <div id="upload-img">
-            <img id="upload-icon" src="mainPageAssets/uploadIcon.png">
-          </div>
-        </label>
+      <label for="input-file">
+        <input type="file" accept="application/json" id="input-file">
+        <div id="upload-img">
+          <img id="upload-icon" src="mainPageAssets/uploadIcon.png">
+        </div>
+      </label>
     </div>
-  
- </div>
- <script src="nav_Dev.js"></script>
 
+    <pre id="rawReport" style="
+      margin: 20px;
+      padding: 15px;
+      background: rgba(255,255,255,0.85);
+      border-radius: 10px;
+      border: 1px solid rgba(0,0,0,0.08);
+      white-space: pre-wrap;
+      font-family: monospace;
+      font-size: 13px;
+      max-height: 400px;
+      overflow: auto;
+      color: black;
+    "></pre>
+  </div>
 
- <div class="solutions" id="solutionContainer">
-      <p>Solutions will go here...</p>
-      <p>Solutions will go here...</p><p>Solutions will go here...</p><p>Solutions will go here...</p>
-      <p>Solutions will go here...</p><p>Solutions will go here...</p><p>Solutions will go here...</p>
-      <p>Solutions will go here...</p>
- </div>
+  <div class="solutions" id="solutionContainer">
+    <div id="solutionsText" style="padding: 20px; font-size: 16px;"></div>
+  </div>
+
+  <!-- IMPORTANT: load main.js first (defines window.checkConflicts) -->
+  <script src="main.js"></script>
+  <script src="test.js"></script>
+  <script src="nav_Dev.js"></script>
 </body>
-
 </html>
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
