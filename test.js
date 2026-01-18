@@ -277,6 +277,9 @@ async function yieldToUI() {
 async function runInBrowser(flightArray, log) {
   const lossOfSeparations = [];
 
+  // Added: structured solutions we can render nicely in the solutions container
+  const solutions = [];
+
   const flightLog = new FlightLog();
   for (const f of flightArray) flightLog.addFlight(f, log);
 
@@ -302,6 +305,20 @@ async function runInBrowser(flightArray, log) {
 
   log(`Batch sim running from T=0 to T=${Math.floor(endT)} (dt=${dt}s)...`);
 
+  // Added: store recognizable info about a flight (airports, type, etc.)
+  function makeFlightMeta(flight) {
+    return {
+      id: flight.acid,
+      fromIcao: flight.departureAirport.icaoCode,
+      fromCity: flight.departureAirport.city,
+      toIcao: flight.arrivalAirport.icaoCode,
+      toCity: flight.arrivalAirport.city,
+      aircraftType: flight.aircraftType.aircraftType,
+      isCargo: flight.isCargo,
+      passengers: flight.passengers,
+    };
+  }
+
   for (; T <= endT; T += dt) {
     const conflicts = window.checkConflicts(planes, T);
 
@@ -325,12 +342,46 @@ async function runInBrowser(flightArray, log) {
           log(`Fix: altitude change not found within constraints; suggest delaying one flight by 300s`);
         }
 
+        // Added: store structured solution info so UI can show it cleanly
+        const flightA = flightById.get(A);
+        const flightB = flightById.get(B);
+
+        const solutionObj = {
+          planeA: A,
+          planeB: B,
+          startTime: startTime,
+          endTime: T,
+          duration: T - startTime,
+          flightA: flightA ? makeFlightMeta(flightA) : null,
+          flightB: flightB ? makeFlightMeta(flightB) : null,
+          fix: null,
+        };
+
+        if (fix) {
+          solutionObj.fix = {
+            type: "altitude",
+            flightToChange: fix.id,
+            fromAlt: fix.from,
+            toAlt: fix.to,
+            aircraftType: fix.typeLabel,
+            optimalMin: fix.optMin,
+            optimalMax: fix.optMax,
+          };
+        } else {
+          solutionObj.fix = {
+            type: "delay",
+            delaySeconds: 300,
+          };
+        }
+
+        solutions.push(solutionObj);
+
         lossOfSeparations.push({ planeA: A, planeB: B, startTime, endTime: T, duration: T - startTime });
         activeConflicts.delete(key);
       }
     }
 
-    // Yield every 50 sim seconds so the UI updates in a timely fashion
+    //yielding every 50 sim seconds so the UI updates in a timely fashion
     if (T % 50 === 0) await yieldToUI();
   }
 
@@ -340,6 +391,8 @@ async function runInBrowser(flightArray, log) {
   return {
     totalFlights: planes.length,
     conflicts: lossOfSeparations,
+    // Added: return structured solutions for the solutions container
+    solutions: solutions,
   };
 }
 
