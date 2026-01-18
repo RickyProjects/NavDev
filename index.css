@@ -3,7 +3,6 @@ background-color: #add8e6;
 color: black;
 }
 
-
 .mainPageDrawings {
 #title {
     position: absolute;
@@ -21,9 +20,6 @@ color: black;
 .cloudAnimation2 {
  position:absolute;
 }
-
-
-
 
 #upload {
  font-size: 35px;
@@ -51,10 +47,6 @@ color: black;
 }
 
 
-
-
-
-
 .conflicts {
  position:absolute;
  background-color: #36454f;
@@ -76,7 +68,6 @@ color: black;
  font-size: 50px;
  color: black;
 
-
  /*scrollability*/
  margin-top: 2%;
  margin-left: 59%;
@@ -85,14 +76,10 @@ color: black;
  overflow-y: scroll;
 }
 
-
 /* FOR SHIFTING THE CONFLICT CONTAINER ELEMENTS UPWARD*/
 .conflicts.jsonUploaded #upload { /*overrides previous set-up*/
   margin-top: 20px;
 }
-
-
-
 
 
 /*======================================================================*/

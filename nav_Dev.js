@@ -1,14 +1,34 @@
 const input = document.getElementById("input-file");
-const rawReport = document.getElementById("rawReport");
-const solutionsText = document.getElementById("solutionsText");
+const emptySimText = document.getElementById("emptySimText");
+const simulationText = document.getElementById("simulationText");
+
+const solutionsPendingImg = document.getElementById("solutionsPending");
+const noSolutionsImg = document.getElementById("noSolutionsAnimation");
+
+function setSolutionState(state) {
+  // state: "pending" | "running" | "noSolutions" | "hasConflicts"
+  if (solutionsPendingImg) {
+    solutionsPendingImg.style.display =(state === "pending") ? "block": "none";
+  }
+  if (noSolutionsImg) {
+    noSolutionsImg.style.display = (state === "noSolutions") ? "block": "none";
+  }
+
+  // If you want text hidden in pending state, you can do:
+  if (simulationText) {
+    simulationText.style.display = (state === "pending") ? "none": "block";
+  }
+}
+
+setSolutionState("pending"); // default solutions image
 
 function makeLogger() {
   let buffer = "";
   return {
     log(line) {
       buffer += line + "\n";
-      rawReport.textContent = buffer;
-      rawReport.scrollTop = rawReport.scrollHeight;
+      emptySimText.textContent = buffer;
+      emptySimText.scrollTop = emptySimText.scrollHeight;
     },
     getText() {
       return buffer;
@@ -18,37 +38,49 @@ function makeLogger() {
 
 input.addEventListener("change", async (e) => {
   const file = e.target.files?.[0];
-  if (!file) return;
+  if (!file) {
+    return;
+  }
+  // shift elements upward after upload
+  document.getElementById("conflictContainer").classList.add("jsonUploaded");
 
-  document.getElementById("conflictContainer").classList.add("jsonUploaded"); // FOR SHIFTING THE CONFLICT CONTAINER ELEMENTS UPWARD
+  // clear UI
+  emptySimText.textContent = "";
+  simulationText.innerHTML = "";
 
-  rawReport.textContent = "";
-  solutionsText.innerHTML = "";
+  // update right-side state while running
+  setSolutionState("running");
 
   const logger = makeLogger();
 
   try {
     logger.log(`Reading ${file.name}...`);
     const text = await file.text();
-    const flightArray = JSON.parse(text);
+    const flightReadIn = JSON.parse(text);
 
     logger.log("Starting simulation in browser...");
 
-    const result = await window.runInBrowser(flightArray, logger.log);
+    const result = await window.runInBrowser(flightReadIn, logger.log);
+    logger.log("\n"+ "Okay, Simulation Complete!");
 
-    logger.log("");
-    logger.log("Done. Rendering summary...");
-
-    // Display a simple summary on the right
-    const lines = [];
-    lines.push(`<h2>Summary</h2>`);
-    lines.push(`<p><strong>Total flights:</strong> ${result.totalFlights}</p>`);
-    lines.push(`<p><strong>Total conflicts:</strong> ${result.conflicts.length}</p>`);
-
-    solutionsText.innerHTML = lines.join("");
+  //solutions messages (images and animations)
+    if (result.conflicts.length === 0) {
+      setSolutionState("noSolutions");
+      simulationText.innerHTML = `
+        <p><strong>Total flights:</strong> ${result.totalFlights}</p>
+        <p><strong>Total conflicts:</strong> 0</p>
+      `;
+    } else {
+      setSolutionState("hasConflicts");
+      simulationText.innerHTML = `
+        <h2>Summary</h2>
+        <p><strong>Total flights:</strong> ${result.totalFlights}</p>
+        <p><strong>Total conflicts:</strong> ${result.conflicts.length}</p>
+      `;
+    }
 
   } catch (err) {
-    rawReport.textContent = `Error: ${err.message}`;
+    emptySimText.textContent = `Error: ${err.message}`;
     console.error(err);
   }
 });

@@ -278,7 +278,7 @@ async function runInBrowser(flightArray, log) {
     if (T % 50 === 0) await yieldToUI();
   }
 
-  log("Batch sim done.");
+  log("Simulation Complete!");
   log(`Total conflicts: ${lossOfSeparations.length}`);
 
   return {
