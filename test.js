@@ -332,6 +332,99 @@
   return alts;
 }
 
+function speedCandidatesFromConstraints(constraints, currentSpeed) {
+  // Prefer cruise range if present; else min/max speed
+  const lo = constraints.minCruiseSpeed ?? constraints.minSpeed;
+  const hi = constraints.maxCruiseSpeed ?? constraints.maxSpeed;
+
+  // Try small deltas first (planner-friendly)
+  const deltas = [-30, -20, -10, -5, 5, 10, 20, 30];
+
+  const cands = [];
+  for (const d of deltas) {
+    const s = currentSpeed + d;
+    if (s >= lo && s <= hi) cands.push(s);
+  }
+
+  // fallback: if nothing matched, try the bounds
+  if (cands.length === 0) {
+    if (currentSpeed !== lo) cands.push(lo);
+    if (currentSpeed !== hi) cands.push(hi);
+  }
+
+  return cands;
+}
+
+function hasConflictBetweenTwoPlanes(planeA, planeB, tStart, tEnd, dtSec, checkConflicts) {
+  // Only check these two planes
+  for (let t = tStart; t <= tEnd; t += dtSec) {
+    const cs = checkConflicts([planeA, planeB], t);
+    if (cs.length > 0) return true;
+  }
+  return false;
+}
+
+function suggestSpeedFix(A, B, flightById, planesById, conflictStartT, conflictEndT, checkConflicts) {
+  const fA = flightById.get(A);
+  const fB = flightById.get(B);
+  const pA = planesById.get(A);
+  const pB = planesById.get(B);
+  if (!fA || !fB || !pA || !pB) return null;
+
+  // Choose who to change: cargo first, else fewer passengers
+  const changeOrder = [];
+  if (fA.isCargo !== fB.isCargo) {
+    changeOrder.push(fA.isCargo ? A : B);
+    changeOrder.push(fA.isCargo ? B : A);
+  } else {
+    changeOrder.push((fA.passengers <= fB.passengers) ? A : B);
+    changeOrder.push((fA.passengers <= fB.passengers) ? B : A);
+  }
+
+  const dtSec = 1; // use same accuracy as your sim step (or 5 if you changed it)
+  const pad = 120; // check a bit before/after the interval
+  const tStart = Math.max(0, conflictStartT - pad);
+  const tEnd = conflictEndT + pad;
+
+  for (const id of changeOrder) {
+    const f = flightById.get(id);
+    const p = planesById.get(id);
+    const other = (id === A) ? pB : pA;
+
+    const curSpeed = p.speed; // knots
+    const cands = speedCandidatesFromConstraints(f.aircraftType.constraints, curSpeed);
+
+    for (const newSpeed of cands) {
+      // try speed change temporarily
+      const old = p.speed;
+      p.speed = newSpeed;
+
+      const stillConflicts = hasConflictBetweenTwoPlanes(
+        (id === A) ? p : other,
+        (id === A) ? other : p,
+        tStart, tEnd, dtSec, checkConflicts
+      );
+
+      // revert
+      p.speed = old;
+
+      if (!stillConflicts) {
+        return {
+          id,
+          from: curSpeed,
+          to: newSpeed,
+          typeLabel: f.aircraftType.aircraftType,
+          cruiseMin: f.aircraftType.constraints.minCruiseSpeed ?? f.aircraftType.constraints.minSpeed,
+          cruiseMax: f.aircraftType.constraints.maxCruiseSpeed ?? f.aircraftType.constraints.maxSpeed
+        };
+      }
+    }
+  }
+
+  return null;
+}
+
+
 function suggestAltitudeFix(A, B, flightById, planesById) {
     const fA = flightById.get(A);
     const fB = flightById.get(B);
@@ -461,6 +554,41 @@ function suggestAltitudeFix(A, B, flightById, planesById) {
         for (const ch of flight.acid) hash = (hash * 33 + ch.charCodeAt(0)) >>> 0;
         return lo + (hash % (hi - lo + 1));
     }
+    function altitudeFixActuallyWorks(
+    fix,
+    A,
+    B,
+    planesById,
+    conflictStartT,
+    conflictEndT,
+    checkConflicts
+    ) {
+    if (!fix) return false;
+
+    const p = planesById.get(fix.id);
+    const other = (fix.id === A) ? planesById.get(B) : planesById.get(A);
+
+    const oldAlt = p.altitudeFt;
+    p.altitudeFt = fix.to;
+
+    const dtSec = 1;
+    const pad = 120;
+    const tStart = Math.max(0, conflictStartT - pad);
+    const tEnd = conflictEndT + pad;
+
+    let stillConflicts = false;
+    for (let t = tStart; t <= tEnd; t += dtSec) {
+        if (checkConflicts([p, other], t).length > 0) {
+        stillConflicts = true;
+        break;
+        }
+    }
+
+    // revert
+    p.altitudeFt = oldAlt;
+
+    return !stillConflicts;
+    }
 
     function getStringProposal(fix) {
         if (!fix) {
@@ -472,6 +600,15 @@ function suggestAltitudeFix(A, B, flightById, planesById) {
             `(${fix.typeLabel}, optimal ${fix.optMin}-${fix.optMax} ft)`
         );
     }
+
+    function getStringSpeedProposal(speedFix) {
+        if (!speedFix) return null;
+        return (
+            `Adjust ${speedFix.id} speed from ${speedFix.from} kt to ${speedFix.to} kt ` +
+            `(${speedFix.typeLabel}, allowed ${speedFix.cruiseMin}-${speedFix.cruiseMax} kt)`
+        );
+    }
+
 
     function flightToPlaneShape(flight, simStartUnixSec) {
   //flight.departureTime is a date object in flight, so changes to milliseconds
@@ -565,36 +702,52 @@ function suggestAltitudeFix(A, B, flightById, planesById) {
                 for (const [key, startTime] of activeConflicts.entries()) {
                     if (!nowKeys.has(key)) {
                         const [A, B] = key.split("|");
+                        lossOfSeparations.push({
+                        planeA: A,
+                        planeB: B,
+                        startTime,
+                        endTime: T,
+                        duration: T - startTime,
+                        altitudeOption: getStringProposal(suggestAltitudeFix(A, B, flightById, planesById)),
+                        speedOption: (() => {
+                            const sFix = suggestSpeedFix(A, B, flightById, planesById, startTime, T, checkConflicts);
+                            return sFix ? getStringSpeedProposal(sFix) : "";
+                        })()
+                        });
+
                         console.log(
                         `LOSS OF SEPARATION between ${A} and ${B} from T=${startTime}s to T=${T}s`
                         );
 
-                        const fix = suggestAltitudeFix(A, B, flightById, planesById);
-                        if (fix) {
-                        console.log(
-                            `Fix: set ${fix.id} altitude ${fix.from} -> ${fix.to} ` +
-                            `(${fix.typeLabel} optimal ${fix.optMin}-${fix.optMax})`
-                        );
-                        } else {
-                            console.log(`Fix: altitude change not found within constraints; suggest delaying one flight by 300s`);
-                        }
-                        lossOfSeparations.push({
-                        planeA: A,
-                        planeB: B,
-                        startTime: startTime,
-                        endTime: T,
-                        duration: T - startTime
-                        });
+                        // Always print altitude option
+                        const altFix = suggestAltitudeFix(A, B, flightById, planesById);
+                        console.log(`Altitude option: ${getStringProposal(altFix)}`);
 
+                        // Always print speed option
+                        const speedFix = suggestSpeedFix(
+                        A,
+                        B,
+                        flightById,
+                        planesById,
+                        startTime,
+                        T,
+                        checkConflicts
+                        );
+
+                        const speedStr = getStringSpeedProposal(speedFix);
+                        if (speedFix) {
+                            console.log(`Speed option: ${getStringSpeedProposal(speedFix)}`);
+                        }
                         activeConflicts.delete(key);
+
+
                         }
                     }
                 }
 
                 console.log("Batch sim done.");
                 console.table(lossOfSeparations);
-                
-
+            
 
             } catch (error) {
                 console.error('Could not run main:', error.message);
