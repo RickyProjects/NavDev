@@ -74,49 +74,48 @@ function interpolateGreatCircle(start, end, u) {
 
 //converts the curvature of the globe into a 2 dimensional plane for simpler calculations using haversine equation
 function planeStateAtTime(plane, T) {
-  //if not departed yet, ignore this plane
+  // if not departed yet, ignore this plane
   if (T < plane.departureTime) {
     return { active: false, reason: "waiting" };
   }
 
-  //time since departure, subtracts global time from the planes departure time
+  // time since THIS plane departed (per-flight)
   const tau = T - plane.departureTime; // seconds
 
-  //calculates the total distance of the flight
+  // Ignore first 300 seconds of EACH flight (climb/terminal)
+  if (tau < 300) {
+    return { active: false, reason: "climb phase" };
+  }
+
   const totalDistM = haversineMeters(plane.from, plane.to);
 
-  //converts the planes speed from knots to meters per second
   const speedMps =
-  (plane.speedMps != null) ? plane.speedMps
-  : (plane.speed != null) ? plane.speed * 0.514444
-  : 0;
+    (plane.speedMps != null) ? plane.speedMps
+    : (plane.speed != null) ? plane.speed * 0.514444
+    : 0;
 
-if (speedMps <= 0) return { active: false, reason: "invalid speed" };
+  if (speedMps <= 0) return { active: false, reason: "invalid speed" };
 
-  //finds the duration of flights
   const duration = totalDistM / speedMps;
 
-  //finds the progress / completion percent of the flight (0 - 1)
+  // OPTIONAL: ignore last 300 seconds of EACH flight (descent/terminal)
+  if (duration - tau < 300) {
+    return { active: false, reason: "descent phase" };
+  }
+
   const u = clamp01(tau / duration);
 
-  //if the plane has arrived, ignore this plane going forward
   if (u >= 1) {
     return { active: false, reason: "arrived" };
   }
 
-  //finds the position of the plane at the given completion of the flight, u
   const pos = interpolateGreatCircle(plane.from, plane.to, u);
 
-  //gets the planes altitude in feet
   const altitudeFt = plane.altitudeFt;
 
-  return {
-    active: true,
-    id: plane.id,
-    pos,
-    altitudeFt,
-  };
+  return { active: true, id: plane.id, pos, altitudeFt };
 }
+
 
 //returns true if two planes have lost seperation (are too close)
 
@@ -127,7 +126,7 @@ function isLossOfSeparation(stateA, stateB) {
   // vertical distance in feet
   const vertFt = Math.abs(stateA.altitudeFt - stateB.altitudeFt);
 
-  return horizM <= HORIZONTAL_LIMIT_M && vertFt <= VERTICAL_LIMIT_FT;
+  return horizM < HORIZONTAL_LIMIT_M && vertFt < VERTICAL_LIMIT_FT;
 }
 
 //checks if all planes at a given time T are a safe distance from eachother

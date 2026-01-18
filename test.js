@@ -320,6 +320,74 @@
     //     }
     // }
 
+    function wrap360(deg) {
+        return (deg % 360 + 360) % 360;
+        }
+
+        function initialBearingDeg(from, to) {
+        const toRad = d => d * Math.PI / 180;
+        const toDeg = r => r * 180 / Math.PI;
+
+        const lat1 = toRad(from.lat), lon1 = toRad(from.lon);
+        const lat2 = toRad(to.lat),   lon2 = toRad(to.lon);
+        const dLon = lon2 - lon1;
+
+        const y = Math.sin(dLon) * Math.cos(lat2);
+        const x = Math.cos(lat1) * Math.sin(lat2) -
+                    Math.sin(lat1) * Math.cos(lat2) * Math.cos(dLon);
+
+        return wrap360(toDeg(Math.atan2(y, x)));
+        }
+
+    function pickCruiseAltitudeFt(flight) {
+        const c = flight.aircraftType.constraints;
+
+        const min = Math.ceil(c.minOptimalRange / 1000) * 1000;
+        const max = Math.floor(c.maxOptimalRange / 1000) * 1000;
+
+        const from = { lat: flight.departureAirport.latitude, lon: flight.departureAirport.longitude };
+        const to   = { lat: flight.arrivalAirport.latitude,   lon: flight.arrivalAirport.longitude };
+
+        //determines whether the plane is moving eastbound or westbound
+        const brg = initialBearingDeg(from, to);
+        const eastbound = brg < 180;
+
+        //determines the altitude depending on the direction of the flight
+        const wantOdd = eastbound;
+
+        const candidates = [];
+        for (let alt = min; alt <= max; alt += 1000) {
+            const fl = Math.round(alt / 1000);
+            const isOdd = (fl % 2) === 1;
+            if (isOdd === wantOdd) candidates.push(alt);
+        }
+
+        const usable = candidates.length ? candidates : (() => {
+            const all = [];
+            for (let alt = min; alt <= max; alt += 1000) all.push(alt);
+            return all;
+        })();
+
+        // deterministic pick based on flight id
+        let hash = 0;
+        for (const ch of flight.acid) hash = (hash * 31 + ch.charCodeAt(0)) >>> 0;
+        return usable[hash % usable.length];
+    }
+
+    function pickCruiseSpeedKts(flight) {
+        const c = flight.aircraftType.constraints;
+
+        // uses minCruiseSpeed/maxCruiseSpeed if present; else fall back to minSpeed/maxSpeed
+        const lo = c.minCruiseSpeed ?? c.minSpeed;
+        const hi = c.maxCruiseSpeed ?? c.maxSpeed;
+
+        // picks speed based on flight id
+        let hash = 0;
+        for (const ch of flight.acid) hash = (hash * 33 + ch.charCodeAt(0)) >>> 0;
+        return lo + (hash % (hi - lo + 1));
+    }
+
+
     function flightToPlaneShape(flight, simStartUnixSec) {
   //flight.departureTime is a date object in flight, so changes to milliseconds
         const departUnixSec = flight.departureTime.getTime() / 1000;
@@ -332,10 +400,10 @@
         from: { lat: flight.departureAirport.latitude, lon: flight.departureAirport.longitude },
         to:   { lat: flight.arrivalAirport.latitude,   lon: flight.arrivalAirport.longitude },
 
-        altitudeFt: flight.altitude,
+        altitudeFt: pickCruiseAltitudeFt(flight),
 
         //main.js takes speed in knots
-        speed: flight.aircraftSpeed,
+        speed: pickCruiseSpeedKts(flight),
 
         //main.js expects departureTime seconds since start of simulation
         departureTime: departUnixSec - simStartUnixSec
@@ -357,8 +425,8 @@
 
                 console.log('Total flights:', flightLog.flights.length);
 
-                const testFlight = flightLog.getFlight('FDX227');
-                console.log('Test flight FDX227:', testFlight);
+                //const testFlight = flightLog.getFlight('FDX227');
+                //console.log('Test flight FDX227:', testFlight);
 
                 //converting information from flightLog into info that main.js can understand
                 const simStartUnixSec = Math.min(...flightLog.flights.map(f => f.departureTime.getTime() / 1000));
@@ -367,18 +435,29 @@
                 console.log("Planes ready for conflict sim:", planes.length);
 
                 //starts the simulation
-                let T = 0;            // seconds since sim start
-                const tickMs = 1000;  // set to 100 for better higher accuracy, but slower runtime
+                // ---- FAST BATCH RUN (no real-time waiting) ----
+
+                // starts the simulation
+                let T = 0;                 // seconds since sim start
+                const tickMs = 1000;       // keep 1000ms = 1s sim step for same accuracy as your current run
+                const dt = tickMs / 1000;  // seconds per step
+
+                //figures out when to stop
+                const lastDeparture = Math.max(...planes.map(p => p.departureTime));
+                const maxFlightSeconds = 8 * 3600; // 8 hours buffer
+                const endT = lastDeparture + maxFlightSeconds;
 
                 // prevents printing the same conflict every tick
-                const activeConflictKeys = new Set();
+                const activeConflicts = new Map();
 
-                setInterval(() => {
-                const activeCount = planes.filter(p => T >= p.departureTime).length;
+                console.log(`Batch sim running from T=0 to T=${Math.floor(endT)} (dt=${dt}s)...`);
 
-                if (T % 60 === 0) { // prints every 60 seconds of sim time
-                console.log(`T=${T}s | active planes (departed): ${activeCount}`);
+                for (; T <= endT; T += dt) {
+
+                if (T % 600 === 0) { 
+                    console.log(`T=${T}s`);
                 }
+
                 const conflicts = checkConflicts(planes, T);
 
                 const nowKeys = new Set();
@@ -387,22 +466,25 @@
                     const key = [c.planeA, c.planeB].sort().join("|");
                     nowKeys.add(key);
 
-                    if (!activeConflictKeys.has(key)) {
-                    console.log(`LOSS OF SEPARATION START at T=${c.time}s between ${c.planeA} and ${c.planeB}`);
+                    // conflict just started
+                    if (!activeConflicts.has(key)) {
+                        activeConflicts.set(key, c.time);
                     }
                 }
 
-                for (const key of activeConflictKeys) {
+
+                for (const [key, startTime] of activeConflicts.entries()) {
                     if (!nowKeys.has(key)) {
-                    console.log(`LOSS OF SEPARATION END at T=${T}s for ${key}`);
+                        const [A, B] = key.split("|");
+                        console.log(
+                        `LOSS OF SEPARATION between ${A} and ${B} from T=${startTime}s to T=${T}s`
+                        );
+                        activeConflicts.delete(key);
                     }
                 }
+                }
 
-                activeConflictKeys.clear();
-                for (const key of nowKeys) activeConflictKeys.add(key);
-
-                T += tickMs / 1000;
-                }, tickMs);
+                console.log("Batch sim done.");
 
 
             } catch (error) {
