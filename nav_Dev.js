@@ -20,6 +20,8 @@ input.addEventListener("change", async (e) => {
   const file = e.target.files?.[0];
   if (!file) return;
 
+  document.getElementById("conflictContainer").classList.add("jsonUploaded"); // FOR SHIFTING THE CONFLICT CONTAINER ELEMENTS UPWARD
+
   rawReport.textContent = "";
   solutionsText.innerHTML = "";
 

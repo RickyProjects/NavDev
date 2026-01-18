@@ -86,7 +86,10 @@ color: black;
 }
 
 
-
+/* FOR SHIFTING THE CONFLICT CONTAINER ELEMENTS UPWARD*/
+.conflicts.jsonUploaded #upload { /*overrides previous set-up*/
+  margin-top: 20px;
+}
 
 
 
@@ -96,17 +99,9 @@ color: black;
 /*Formatting for device compaitiibility (macbook screens up to monitors)*/
 /*MACBOOK SCREEN*/
 @media only screen and (min-width: 1200px) {
-.cloudAnimation {
+    .cloudAnimation {
+    }
 }
-}
 
 
 
-
-/*Roughly monitor s*/
-@media only screen and (min-width: 1600px) {
-
-
-
-
-}
