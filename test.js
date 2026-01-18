@@ -494,9 +494,10 @@ function suggestAltitudeFix(A, B, flightById, planesById) {
         departureTime: departUnixSec - simStartUnixSec
     };
     }
-
+    
         async function main() {
             try {
+                const lossOfSeparations = [];
                 // find file path regardless of where script is run from
                 const filePath = path.join(
                     __dirname,
@@ -577,6 +578,13 @@ function suggestAltitudeFix(A, B, flightById, planesById) {
                         } else {
                             console.log(`Fix: altitude change not found within constraints; suggest delaying one flight by 300s`);
                         }
+                        lossOfSeparations.push({
+                        planeA: A,
+                        planeB: B,
+                        startTime: startTime,
+                        endTime: T,
+                        duration: T - startTime
+                        });
 
                         activeConflicts.delete(key);
                         }
@@ -584,6 +592,8 @@ function suggestAltitudeFix(A, B, flightById, planesById) {
                 }
 
                 console.log("Batch sim done.");
+                console.table(lossOfSeparations);
+                
 
 
             } catch (error) {
