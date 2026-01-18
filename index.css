@@ -101,10 +101,76 @@ max-width: 70%;
 /*======================================================================*/
 /*Formatting for device compaitiibility (macbook screens up to monitors)*/
 /*MACBOOK SCREEN*/
-@media only screen and (min-width: 1200px) {
-    .cloudAnimation {
+@media only screen and (max-width: 1500px) {
+    #cloudAnimation {
+        max-width: 100%;
+        height: auto;
     }
+
+    #cloudAnimation2 {
+        max-width: 100%;
+        height: auto;
+        top:20%;
+    }
+
+    #upload {
+        font-size: 35px;
+        color:black;
+        width: 400px;
+        height: 300px;
+        padding: 30px;
+        background: white;
+        text-align: center;
+        border-radius: 20px;
+        margin-left: 15%;
+        margin-top: 15%;
+        #upload-img {
+            margin-top: 3%;
+            width: 100%;
+            height:80%;
+            border-radius:20px;
+            border:2px dashed #bbb5ff;
+            background: #f7f8ff;
+                #upload-icon{
+                    width: 350px;
+                    height: 250px;
+                }
+        }
+        }
+
+
+        .conflicts {
+            position:absolute;
+            background-color: #36454f;
+            border-radius: 25px 0 0 25px;
+            font-size: 50px;
+            /*scrollability*/
+            margin-left: 6%;
+            height: 620px;
+            width: 710px;
+            overflow-y: scroll;
+        }
+
+
+        .solutions {
+            position:absolute;
+            background-color: white;
+            border-radius: 0 25px 25px 0;
+            font-size: 50px;
+            color: black;
+
+            /*scrollability*/
+            margin-left: 55%;
+            height: 620px;
+            width: 500px;
+            overflow-y: scroll;
+        }
+
+        #LoadingSolutionsAnimation {
+            
+        }
 }
+
 
 
 
