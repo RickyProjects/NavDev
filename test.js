@@ -319,6 +319,81 @@
     //         throw error;
     //     }
     // }
+        function altitudeCandidatesFromConstraints(constraints) {
+  // Prefer optimal range, fallback to min/max altitude range
+  const min = (constraints.minOptimalRange ?? constraints.minAltitude);
+  const max = (constraints.maxOptimalRange ?? constraints.maxAltitude);
+
+  const lo = Math.ceil(min / 1000) * 1000;
+  const hi = Math.floor(max / 1000) * 1000;
+
+  const alts = [];
+  for (let a = lo; a <= hi; a += 1000) alts.push(a);
+  return alts;
+}
+
+function suggestAltitudeFix(A, B, flightById, planesById) {
+    const fA = flightById.get(A);
+    const fB = flightById.get(B);
+    const pA = planesById.get(A);
+    const pB = planesById.get(B);
+    if (!fA || !fB || !pA || !pB) return null;
+
+    const curA = pA.altitudeFt;
+    const curB = pB.altitudeFt;
+
+    const cA = fA.aircraftType.constraints;
+    const cB = fB.aircraftType.constraints;
+
+    const candA = altitudeCandidatesFromConstraints(cA);
+    const candB = altitudeCandidatesFromConstraints(cB);
+
+    // Prefer changing the lower-impact flight:
+    // cargo first, else fewer passengers
+    const changeOrder = [];
+    if (fA.isCargo !== fB.isCargo) {
+        changeOrder.push(fA.isCargo ? A : B);
+        changeOrder.push(fA.isCargo ? B : A);
+    } else {
+        changeOrder.push((fA.passengers <= fB.passengers) ? A : B);
+        changeOrder.push((fA.passengers <= fB.passengers) ? B : A);
+    }
+
+    function bestChangeFor(idToChange) {
+        const cur = (idToChange === A) ? curA : curB;
+        const other = (idToChange === A) ? curB : curA;
+        const cand = (idToChange === A) ? candA : candB;
+        const cons = (idToChange === A) ? cA : cB;
+        const typeLabel = (idToChange === A) ? fA.aircraftType.aircraftType : fB.aircraftType.aircraftType;
+
+        // Need >=2000 ft separation (since conflict is within 2000)
+        let best = null;
+        for (const alt of cand) {
+        if (Math.abs(alt - other) >= 2000) {
+            const delta = Math.abs(alt - cur);
+            if (!best || delta < best.delta) {
+            best = {
+                id: idToChange,
+                from: cur,
+                to: alt,
+                delta,
+                typeLabel,
+                optMin: cons.minOptimalRange,
+                optMax: cons.maxOptimalRange
+            };
+            }
+        }
+        }
+        return best;
+    }
+
+    for (const id of changeOrder) {
+        const proposal = bestChangeFor(id);
+        if (proposal) return proposal;
+    }
+
+    return null; // no altitude-only fix found within constraints
+    }
 
     function wrap360(deg) {
         return (deg % 360 + 360) % 360;
@@ -387,6 +462,16 @@
         return lo + (hash % (hi - lo + 1));
     }
 
+    function getStringProposal(fix) {
+        if (!fix) {
+            return "No valid altitude change found within aircraft constraints; suggest delaying one flight by 300 seconds.";
+        }
+
+        return (
+            `Set ${fix.id} altitude from ${fix.from} ft to ${fix.to} ft ` +
+            `(${fix.typeLabel}, optimal ${fix.optMin}-${fix.optMax} ft)`
+        );
+    }
 
     function flightToPlaneShape(flight, simStartUnixSec) {
   //flight.departureTime is a date object in flight, so changes to milliseconds
@@ -423,6 +508,8 @@
 
                 const flightLog = await readFile(filePath);
 
+                const flightById = new Map(flightLog.flights.map(f => [f.acid, f]));
+
                 console.log('Total flights:', flightLog.flights.length);
 
                 //const testFlight = flightLog.getFlight('FDX227');
@@ -431,6 +518,7 @@
                 //converting information from flightLog into info that main.js can understand
                 const simStartUnixSec = Math.min(...flightLog.flights.map(f => f.departureTime.getTime() / 1000));
                 const planes = flightLog.flights.map(f => flightToPlaneShape(f, simStartUnixSec));
+                const planesById = new Map(planes.map(p => [p.id, p]));
 
                 console.log("Planes ready for conflict sim:", planes.length);
 
@@ -455,7 +543,7 @@
                 for (; T <= endT; T += dt) {
 
                 if (T % 600 === 0) { 
-                    console.log(`T=${T}s`);
+                    //console.log(`T=${T}s`);
                 }
 
                 const conflicts = checkConflicts(planes, T);
@@ -479,9 +567,20 @@
                         console.log(
                         `LOSS OF SEPARATION between ${A} and ${B} from T=${startTime}s to T=${T}s`
                         );
+
+                        const fix = suggestAltitudeFix(A, B, flightById, planesById);
+                        if (fix) {
+                        console.log(
+                            `Fix: set ${fix.id} altitude ${fix.from} -> ${fix.to} ` +
+                            `(${fix.typeLabel} optimal ${fix.optMin}-${fix.optMax})`
+                        );
+                        } else {
+                            console.log(`Fix: altitude change not found within constraints; suggest delaying one flight by 300s`);
+                        }
+
                         activeConflicts.delete(key);
+                        }
                     }
-                }
                 }
 
                 console.log("Batch sim done.");
